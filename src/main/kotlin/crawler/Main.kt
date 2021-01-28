@@ -2,8 +2,10 @@ package crawler
 
 import java.net.URL
 
-fun main(args: Array<String>) {
+fun main() {
     val startPoint = URL("http://bbc.com")
+    println("Web crawler started")
+
     val (seen, visited) = Crawler().crawl(startPoint)
     printResults(seen, visited)
 }

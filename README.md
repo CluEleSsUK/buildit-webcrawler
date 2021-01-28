@@ -1,4 +1,8 @@
+# Web crawler tech test
 
+## Quickstart
+To start the crawler, run `./gradlew clean run`
+To run the tests run `./gradlew clean test`
 
 ## Assumptions/tradeoffs
 * to follow redirect responses on any links relating to the start point

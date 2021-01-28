@@ -17,6 +17,7 @@ dependencies {
     testImplementation(kotlin("test-junit5"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.6.0")
+    testImplementation("org.assertj:assertj-core:3.19.0")
     testImplementation("org.mockito:mockito-core:3.7.7")
     // required for mocking final classes with Kotlin
     testImplementation("org.mockito:mockito-inline:3.7.7")
@@ -32,5 +33,5 @@ tasks.withType<KotlinCompile>() {
 }
 
 application {
-    mainClassName = "MainKt"
+    mainClassName = "crawler.MainKt"
 }
