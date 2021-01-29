@@ -6,7 +6,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import java.net.URL
 
-
 data class SiteMapNode(
     val url: URL,
     val children: List<Deferred<SiteMapNode>>,

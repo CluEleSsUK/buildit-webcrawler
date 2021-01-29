@@ -35,4 +35,3 @@ sealed class NetworkCall {
         }
     }
 }
-

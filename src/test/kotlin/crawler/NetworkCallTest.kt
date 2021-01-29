@@ -63,7 +63,7 @@ class NetworkCallTest {
     @Test
     fun `any errors making the request return an error response`() {
         // when
-        val result = NetworkCall.wrap { throw RuntimeException("Connection failure!")}
+        val result = NetworkCall.wrap { throw RuntimeException("Connection failure!") }
 
         // then
         assertThat(result).isEqualTo(NetworkCall.Failure)
