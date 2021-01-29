@@ -12,10 +12,10 @@ import java.net.URL
 import java.net.http.HttpHeaders
 import java.net.http.HttpResponse
 
-class CrawlerTest {
+class WebCrawlerTest {
 
     private val httpClientMock = Mockito.mock(TextHttpClient::class.java)
-    private val crawler = Crawler(httpClientMock)
+    private val siteMap = WebCrawler(httpClientMock)
 
     @Test
     internal fun `crawler visits sites under the root domain`() {
@@ -34,11 +34,16 @@ class CrawlerTest {
         `when`(httpClientMock.textFrom(siteUnderBaseUrl)).thenReturn(siteUnderBaseUrlResponse)
 
         // when
-        val output = crawler.crawl(baseUrl)
+        val siteMapTree = siteMap.createSiteMapTree(baseUrl)
 
         // then
-        assertThat(output.visited).contains(baseUrl)
-        assertThat(output.visited).contains(siteUnderBaseUrl)
+        val baseNode = siteMapTree.find(baseUrl)
+        val siteUnderBaseNode = siteMapTree.find(siteUnderBaseUrl)
+
+        assertThat(baseNode).isNotNull()
+        assertThat(baseNode?.visited).isEqualTo(true)
+        assertThat(siteUnderBaseNode).isNotNull()
+        assertThat(siteUnderBaseNode?.visited).isEqualTo(true)
 
         verify(httpClientMock, times(1)).textFrom(baseUrl)
         verify(httpClientMock, times(1)).textFrom(siteUnderBaseUrl)
@@ -56,10 +61,14 @@ class CrawlerTest {
         `when`(httpClientMock.textFrom(baseUrl)).thenReturn(baseUrlResponse)
 
         // when
-        val output = crawler.crawl(baseUrl)
+        val siteMapTree = siteMap.createSiteMapTree(baseUrl)
 
         // then
-        assertThat(output.visited).doesNotContain(differentDomain)
+        val siteNotUnderRootDomain = siteMapTree.find(differentDomain)
+
+        assertThat(siteNotUnderRootDomain).isNotNull()
+        assertThat(siteNotUnderRootDomain?.visited).isEqualTo(false)
+
         verify(httpClientMock, times(0)).textFrom(differentDomain)
     }
 
@@ -81,11 +90,16 @@ class CrawlerTest {
         `when`(httpClientMock.textFrom(redirectUrl)).thenReturn(siteUnderBaseUrlResponse)
 
         // when
-        val output = crawler.crawl(baseUrl)
+        val siteMapTree = siteMap.createSiteMapTree(baseUrl)
 
         // then
-        assertThat(output.visited).contains(baseUrl)
-        assertThat(output.visited).doesNotContain(redirectUrl)
+        val baseNode = siteMapTree.find(baseUrl)
+
+        assertThat(baseNode).isNotNull()
+        assertThat(baseNode?.visited).isEqualTo(true)
+
+        val redirectNode = siteMapTree.find(redirectUrl)
+        assertThat(redirectNode).isNull()
 
         verify(httpClientMock, times(1)).textFrom(baseUrl)
         verify(httpClientMock, times(1)).textFrom(redirectUrl)
@@ -102,7 +116,7 @@ class CrawlerTest {
         `when`(httpClientMock.textFrom(baseUrl)).thenReturn(baseUrlResponse)
 
         // when
-        crawler.crawl(baseUrl)
+        siteMap.createSiteMapTree(baseUrl)
 
         // then
         verify(httpClientMock, times(1)).textFrom(baseUrl)
@@ -118,10 +132,13 @@ class CrawlerTest {
         `when`(httpClientMock.textFrom(baseUrl)).thenReturn(baseUrlResponse)
 
         // when
-        val output = crawler.crawl(baseUrl)
+        val siteMapTree = siteMap.createSiteMapTree(baseUrl)
 
         // then
-        assertThat(output.visited).contains(baseUrl)
+        val baseUrlNode = siteMapTree.find(baseUrl)
+        assertThat(baseUrlNode).isNotNull()
+        assertThat(baseUrlNode?.visited).isEqualTo(true)
+
         verify(httpClientMock, times(1)).textFrom(baseUrl)
     }
 
@@ -133,11 +150,12 @@ class CrawlerTest {
         doThrow(RuntimeException("connection failed")).`when`(httpClientMock).textFrom(baseUrl)
 
         // when
-        val output = crawler.crawl(baseUrl)
+        val siteMapTree = siteMap.createSiteMapTree(baseUrl)
 
         // then
-        assertThat(output.visited).contains(baseUrl)
+        val baseUrlNode = siteMapTree.find(baseUrl)
+        assertThat(baseUrlNode).isNotNull()
+        assertThat(baseUrlNode?.visited).isEqualTo(true)
         verify(httpClientMock, times(1)).textFrom(baseUrl)
     }
-
 }

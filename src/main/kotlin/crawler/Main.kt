@@ -1,5 +1,6 @@
 package crawler
 
+import kotlinx.coroutines.runBlocking
 import java.net.URL
 import kotlin.system.exitProcess
 
@@ -8,28 +9,26 @@ fun main(args: Array<String>) {
         println("You must enter a starting URL for the crawl")
         exitProcess(1)
     }
-
     try {
-        val startPoint = URL(args[0])
-        val (seen, visited) = Crawler().crawl(startPoint)
-        printResults(startPoint, seen, visited)
+        val url = "http://bbc.com"
+        val siteTree = WebCrawler().createSiteMapTree(URL(url))
+        print(siteTree)
     } catch (throwable: Throwable) {
         println("The URL entered was not valid - did you remember to add a scheme? (e.g. http://")
         exitProcess(1)
     }
 }
 
-fun printResults(startPoint: URL, found: Set<URL>, visited: Set<URL>) {
-    println("Start point:")
-    println(startPoint)
+fun print(node: SiteMapNode, depth: Int = 0) {
+    println(node.url)
 
-    println("Links under the same domain (visited):")
-    for (v in visited.minus(startPoint)) {
-        println(v)
-    }
-
-    println("Links under other domains (not visited):")
-    for (f in found.minus(visited)) {
-        println(f)
+    runBlocking {
+        node.children.forEach {
+            repeat(depth) {
+                print("  ")
+            }
+            print("|__")
+            print(it.await(), depth + 1)
+        }
     }
 }

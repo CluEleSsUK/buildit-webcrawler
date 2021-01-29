@@ -17,3 +17,9 @@ To run the tests run `./gradlew clean test`
 * TLDs are not checked for validity - if it looks like a link, it will be recorded
 * URLS ending with / are different from those without a / ie. bbc.com != bbc.com/ - not strictly true for top level domains, but true of other URLs
 * pages and static content don't need to be separated for reporting
+
+
+## Concurrency
+The `WebCrawler` outputs a tree of `SiteMapNode`s.  Each node's children are of type `Deferred<SiteMapNode>`, which could seem unusual at first. 
+On the plus side, it allows the printing of the tree while children are still being resolved - otherwise the crawler sits silently crawling until termination and that's no fun!
+On the flip side however, `find` methods of data structures don't tend to be concurrent, so its behaviour could shock an unsuspecting developer.
