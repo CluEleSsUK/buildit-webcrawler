@@ -116,12 +116,14 @@ class CrawlerTest {
         val baseUrlResponse = parameterizedMock<HttpResponse<String>>()
         `when`(baseUrlResponse.statusCode()).thenReturn(400)
         `when`(httpClientMock.textFrom(baseUrl)).thenReturn(baseUrlResponse)
+
         // when
         val output = crawler.crawl(baseUrl)
 
         // then
         assertThat(output.visited).contains(baseUrl)
-        verify(httpClientMock, times(1)).textFrom(baseUrl)    }
+        verify(httpClientMock, times(1)).textFrom(baseUrl)
+    }
 
     @Test
     internal fun `connect failure is handled gracefully`() {
@@ -137,6 +139,5 @@ class CrawlerTest {
         assertThat(output.visited).contains(baseUrl)
         verify(httpClientMock, times(1)).textFrom(baseUrl)
     }
-
 
 }

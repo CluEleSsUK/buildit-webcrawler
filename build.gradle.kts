@@ -13,6 +13,7 @@ repositories {
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
     implementation("org.apache.commons:commons-text:1.9")
     testImplementation(kotlin("test-junit5"))
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.0")
@@ -21,7 +22,6 @@ dependencies {
     testImplementation("org.mockito:mockito-core:3.7.7")
     // required for mocking final classes with Kotlin
     testImplementation("org.mockito:mockito-inline:3.7.7")
-
 }
 
 tasks.test {

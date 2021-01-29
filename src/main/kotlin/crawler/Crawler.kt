@@ -1,34 +1,46 @@
 package crawler
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import java.net.URL
-import java.util.LinkedList
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.atomic.AtomicInteger
 
 data class CrawlStatistics(val seen: Set<URL>, val visited: Set<URL>)
 
 class Crawler(
-    private val httpClient: TextHttpClient = TextHttpClient(),
+    private val httpClient: TextHttpClient = TextHttpClient()
 ) {
 
     fun crawl(startingUrl: URL): CrawlStatistics {
-        val leftToCrawl = LinkedList<URL>()
-        val urlsSeen = hashSetOf<URL>()
-        val visited = hashSetOf<URL>()
+        val leftToCrawl = LinkedBlockingDeque<URL>()
+            .also { it.add(startingUrl) }
+        val urlsIdentified = ConcurrentSet<URL>()
+        val urlsVisited = ConcurrentSet<URL>()
 
-        leftToCrawl.add(startingUrl)
+        val requestsCurrentlyProcessing = AtomicInteger(0)
 
-        var nextUrlToCrawl = leftToCrawl.poll()
-        while (nextUrlToCrawl != null) {
-            urlsSeen += nextUrlToCrawl
+        do {
+            val nextUrl = leftToCrawl.poll() ?: continue
+            requestsCurrentlyProcessing.incrementAndGet()
 
-            if (!visited.contains(nextUrlToCrawl) && underSameDomain(startingUrl, nextUrlToCrawl)) {
-                leftToCrawl += allUrlsWithin(nextUrlToCrawl)
-                visited += nextUrlToCrawl
+            val hasBeenProcessedBefore = urlsIdentified.put(nextUrl)
+
+            if (hasBeenProcessedBefore || !underSameDomain(startingUrl, nextUrl)) {
+                requestsCurrentlyProcessing.decrementAndGet()
+            } else {
+                GlobalScope.async {
+                    try {
+                        allUrlsWithin(nextUrl).forEach { leftToCrawl.add(it) }
+                        urlsVisited.put(nextUrl)
+                    } finally {
+                        requestsCurrentlyProcessing.decrementAndGet()
+                    }
+                }
             }
+        } while (requestsCurrentlyProcessing.get() > 0)
 
-            nextUrlToCrawl = leftToCrawl.poll()
-        }
-
-        return CrawlStatistics(urlsSeen, visited)
+        return CrawlStatistics(urlsIdentified.value(), urlsVisited.value())
     }
 
     // ie. (bbc.com, www.bbc.com) returns true
@@ -37,10 +49,10 @@ class Crawler(
         return other.host.startsWith(baseDomain.host) || other.host.endsWith(".${baseDomain.host}")
     }
 
-    private fun allUrlsWithin(url: URL): List<URL> {
+    private fun allUrlsWithin(url: URL): Sequence<URL> {
         return when (val response = NetworkCall.wrap { httpClient.textFrom(url) }) {
             is NetworkCall.Failure ->
-                emptyList()
+                sequence { }
 
             is NetworkCall.Redirect ->
                 allUrlsWithin(response.nextUrl)
@@ -48,7 +60,6 @@ class Crawler(
             is NetworkCall.Success ->
                 UrlExtractor.from(response.text)
                     .mapNotNull { nullIfException { URL(it) } }
-                    .toList()
         }
     }
 }
