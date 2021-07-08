@@ -10,7 +10,7 @@ fun main(args: Array<String>) {
         exitProcess(1)
     }
     try {
-        val url = "http://bbc.com"
+        val url = args[0]
         val siteTree = WebCrawler().createSiteMapTree(URL(url))
         print(siteTree)
     } catch (throwable: Throwable) {
